@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Atos do Processo</title>
+</head>
+<body>
+  <h2>Atos do Processo</h2>
+  <ul id="lista-atos"></ul>
+
+  <h3>Adicionar Ato</h3>
+  <form id="atoForm">
+    <input name="tipo" placeholder="Tipo de ato (petição, despacho, decisão)" required><br>
+    <input name="autor" placeholder="Autor do ato (advogado, juiz...)" required><br>
+    <textarea name="texto" placeholder="Texto do ato" required></textarea><br>
+    <button type="submit">Salvar Ato</button>
+  </form>
+
+  <script>
+    const url = new URLSearchParams(window.location.search);
+    const processo_id = url.get('id');
+
+    // Carrega os atos do processo
+    fetch(`http://localhost:3000/processos/${processo_id}/atos`)
+      .then(res => res.json())
+      .then(atos => {
+        const lista = document.getElementById('lista-atos');
+        atos.forEach(ato => {
+          const li = document.createElement('li');
+          const dataFormatada = new Date(ato.data).toLocaleString();
+          li.innerHTML = `
+            <strong>${ato.tipo}</strong> por <em>${ato.autor}</em> em <time>${dataFormatada}</time><br>
+            ${ato.texto}
+            <hr>
+          `;
+          lista.appendChild(li);
+        });
+      })
+      .catch(err => {
+        console.error("Erro ao carregar atos:", err);
+        document.getElementById('lista-atos').innerHTML = "<li>Erro ao carregar os atos do processo.</li>";
+      });
+
+    // Envia novo ato
+    document.getElementById('atoForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const data = {
+        tipo: this.tipo.value,
+        texto: this.texto.value,
+        data: new Date().toISOString(),
+        autor: this.autor.value
+      };
+      fetch(`http://localhost:3000/processos/${processo_id}/atos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(() => location.reload())
+      .catch(err => {
+        console.error("Erro ao salvar ato:", err);
+        alert("Erro ao salvar ato.");
+      });
+    });
+  </script>
+</body>
+</html>

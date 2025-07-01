@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Jurisprudência</title>
+</head>
+<body>
+  <h2>Jurisprudência</h2>
+  <p>Área para registrar julgados fictícios com base em decisões do sistema RP.</p>
+
+  <label for="filtro">🔍 Filtrar por código:</label>
+  <input id="filtro" placeholder="Ex: RE 0001">
+  <button onclick="carregar()">Filtrar</button>
+  <button onclick="carregar(true)">Limpar Filtro</button>
+
+  <ul id="lista-juris"></ul>
+
+  <h3>Publicar nova jurisprudência</h3>
+  <form id="jurisForm">
+    <input name="codigo" placeholder="Código (ex: RE 0001)" required><br>
+    <input name="tema" placeholder="Tema (ex: uso de magia)" required><br>
+    <input name="autor" placeholder="Autor (juiz, tribunal...)" required><br>
+    <input name="tribunal" placeholder="Tribunal (ex: TRP-Sul)" required><br>
+    <textarea name="texto" placeholder="Texto da decisão completa" required></textarea><br>
+    <button type="submit">Publicar</button>
+  </form>
+
+  <script>
+    function carregar(resetFiltro = false) {
+      const filtro = document.getElementById("filtro").value;
+      const url = resetFiltro || !filtro
+        ? "http://localhost:3000/juris"
+        : `http://localhost:3000/juris?codigo=${encodeURIComponent(filtro)}`;
+  
+      fetch(url)
+        .then(res => res.json())
+        .then(juris => {
+          const lista = document.getElementById("lista-juris");
+          lista.innerHTML = '';
+          juris.forEach(j => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <strong>${j.codigo}</strong> - ${j.tema}<br>
+              <em>Tribunal:</em> ${j.tribunal} &nbsp; | &nbsp; <em>Autor:</em> ${j.autor}<br>
+              ${j.texto}
+              <br>
+              <button onclick="remover(${j.id})" style="color:red;">Remover</button>
+              <hr>
+            `;
+            lista.appendChild(li);
+          });
+        })
+        .catch(err => {
+          console.error("Erro ao carregar jurisprudências:", err);
+          document.getElementById("lista-juris").innerHTML = "<li>Erro ao carregar jurisprudências.</li>";
+        });
+    }
+  
+    function remover(id) {
+      if (confirm("Tem certeza que deseja remover esta jurisprudência permanentemente?")) {
+        fetch(`http://localhost:3000/juris/${id}`, { method: "DELETE" })
+          .then(res => {
+            if (!res.ok) throw new Error("Erro ao apagar");
+            carregar();
+          })
+          .catch(err => alert("Erro ao remover jurisprudência."));
+      }
+    }
+  
+    // Envio do formulário
+    document.getElementById("jurisForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const data = {
+        codigo: this.codigo.value,
+        tema: this.tema.value,
+        texto: this.texto.value,
+        autor: this.autor.value,
+        tribunal: this.tribunal.value
+      };
+      fetch("http://localhost:3000/juris", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
+      .then(() => {
+        this.reset();
+        carregar();
+      })
+      .catch(err => {
+        console.error("Erro ao publicar jurisprudência:", err);
+        alert("Erro ao publicar.");
+      });
+    });
+  
+    carregar(); // Carrega inicialmente
+  </script>
+</body>
+</html>

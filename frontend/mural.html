@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mural CSJ</title>
+</head>
+<body>
+  <h2>Mural de Avisos do CSJ</h2>
+  <ul id="avisos"></ul>
+
+  <h3>Postar Aviso</h3>
+  <form id="muralForm">
+    <input name="autor" placeholder="Autor do aviso" required><br>
+    <textarea name="texto" placeholder="Texto do aviso" required></textarea><br>
+    <button type="submit">Publicar Aviso</button>
+  </form>
+
+  <script>
+    function carregar() {
+      fetch('http://localhost:3000/mural')
+        .then(res => res.json())
+        .then(avisos => {
+          const lista = document.getElementById('avisos');
+          lista.innerHTML = ''; // limpa antes de carregar
+          avisos.forEach(aviso => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <strong>${aviso.autor}</strong> em ${new Date(aviso.data).toLocaleString()}<br>
+              ${aviso.texto}
+              <br>
+              <button onclick="remover(${aviso.id})" style="color:red;">Remover</button>
+              <hr>
+            `;
+            lista.appendChild(li);
+          });
+        });
+    }
+
+    function remover(id) {
+      if (confirm("Tem certeza que deseja remover este aviso permanentemente?")) {
+        fetch(`http://localhost:3000/mural/${id}`, { method: 'DELETE' })
+          .then(res => {
+            if (!res.ok) throw new Error('Erro ao apagar');
+            carregar();
+          })
+          .catch(() => alert('Erro ao remover aviso.'));
+      }
+    }
+
+    document.getElementById('muralForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const data = {
+        autor: this.autor.value,
+        texto: this.texto.value,
+        data: new Date().toISOString()
+      };
+
+      fetch(`http://localhost:3000/mural`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      })
+      .then(() => {
+        this.reset();
+        carregar();
+      })
+      .catch(() => alert('Erro ao publicar aviso.'));
+    });
+
+    carregar(); // carregar avisos inicialmente
+  </script>
+</body>
+</html>

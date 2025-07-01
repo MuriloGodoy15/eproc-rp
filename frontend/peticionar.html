@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Nova Ação</title>
+</head>
+<body>
+  <h2>Nova Ação</h2>
+  <form id="form">
+    <input name="numero" placeholder="Número do Processo" required><br>
+    <input name="partes" placeholder="Partes" required><br>
+    <input name="status" placeholder="Status" required><br>
+    <button type="submit">Cadastrar</button>
+  </form>
+
+  <script>
+    document.getElementById('form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const data = {
+        numero: this.numero.value,
+        partes: this.partes.value,
+        status: this.status.value
+      };
+      fetch('http://localhost:3000/processos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(() => {
+        alert("Processo criado!");
+        location.href = 'processos.html';
+      });
+    });
+  </script>
+</body>
+</html>

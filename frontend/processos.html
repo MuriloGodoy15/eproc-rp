@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Processos</title>
+</head>
+<body>
+  <h2>Processos Existentes</h2>
+  <ul id="lista-processos"></ul>
+
+  <script>
+    fetch('http://localhost:3000/processos')
+      .then(res => res.json())
+      .then(processos => {
+        const lista = document.getElementById('lista-processos');
+        processos.forEach(proc => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+          <strong>${proc.numero}</strong> - ${proc.partes} (${proc.status})
+          <button onclick="location.href='ver_processo.html?id=${proc.id}'">Ver Atos</button>
+          <button onclick="remover(${proc.id})" style="color:red;">Remover</button>`;
+          lista.appendChild(li);
+        });
+      })
+      .catch(err => {
+        console.error("Erro ao buscar processos:", err);
+        document.getElementById('lista-processos').innerHTML = "<li>Erro ao carregar os processos.</li>";
+      });
+      function remover(id) {
+  if (confirm("Tem certeza que deseja remover este processo e todos os atos vinculados?")) {
+    fetch(`http://localhost:3000/processos/${id}`, {
+      method: 'DELETE'
+    })
+    .then(() => location.reload())
+    .catch(err => alert("Erro ao apagar o processo."));
+  }
+}
+  </script>
+</body>
+</html>

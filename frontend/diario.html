@@ -1,0 +1,78 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Diário Oficial</title>
+</head>
+<body>
+  <h2>Diário Oficial de Justiça</h2>
+  <ul id="diario"></ul>
+
+  <h3>Publicar novo ato</h3>
+  <form id="atoForm">
+    <input name="tipo" placeholder="Tipo (Despacho, Decisão...)" required><br>
+    <input name="autor" placeholder="Autor" required><br>
+    <textarea name="texto" placeholder="Texto do ato" required></textarea><br>
+    <button type="submit">Publicar Ato</button>
+  </form>
+
+  <script>
+    function carregar() {
+      fetch('http://localhost:3000/diario')
+        .then(res => res.json())
+        .then(atos => {
+          const lista = document.getElementById('diario');
+          lista.innerHTML = '';
+          atos.forEach(ato => {
+            // só mostrar botão se for ato do diário (sem processo)
+            const podeRemover = ato.processo_id === null;
+  
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <strong>${ato.tipo}</strong> de <em>${ato.autor}</em> em <time>${new Date(ato.data).toLocaleString()}</time><br>
+              ${ato.texto}
+              ${podeRemover ? `<br><button onclick="remover(${ato.id})" style="color:red;">Remover</button>` : ''}
+              <hr>`;
+            lista.appendChild(li);
+          });
+        });
+    }
+  
+    function remover(id) {
+      if (confirm("Tem certeza que deseja remover este ato permanentemente do Diário Oficial?")) {
+        fetch(`http://localhost:3000/diario/${id}`, { method: 'DELETE' })
+          .then(res => {
+            if (!res.ok) throw new Error("Erro ao apagar");
+            carregar();
+          })
+          .catch(() => alert('Erro ao remover ato.'));
+      }
+    }
+  
+    document.getElementById('atoForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const data = {
+        tipo: this.tipo.value,
+        texto: this.texto.value,
+        data: new Date().toISOString(),
+        autor: this.autor.value,
+        processo_id: null
+      };
+  
+      fetch(`http://localhost:3000/diario/publicar`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      })
+      .then(() => {
+        this.reset();
+        carregar();
+      })
+      .catch(() => alert('Erro ao publicar ato.'));
+    });
+  
+    carregar(); // Carrega atos inicialmente
+  </script>
+</body>
+</html>
